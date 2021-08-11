@@ -7,7 +7,7 @@ import torch
 from pathlib import Path
 
 from .pytorch_utils import move_data_to_device
-from .models import Cnn14, Cnn14_DecisionLevelMax
+from .models import Cnn14, Cnn14_16k, Cnn14_DecisionLevelMax
 from .config import labels, classes_num
 
 
@@ -27,14 +27,7 @@ class AudioTagging(object):
     def __init__(self, model=None, checkpoint_path=None, device='cuda'):
         """Audio tagging inference wrapper.
         """
-        if not checkpoint_path:
-            checkpoint_path='{}/panns_data/Cnn14_mAP=0.431.pth'.format(str(Path.home()))
         print('Checkpoint path: {}'.format(checkpoint_path))
-        
-        if not os.path.exists(checkpoint_path) or os.path.getsize(checkpoint_path) < 3e8:
-            create_folder(os.path.dirname(checkpoint_path))
-            zenodo_path = 'https://zenodo.org/record/3987831/files/Cnn14_mAP%3D0.431.pth?download=1'
-            os.system('wget -O "{}" "{}"'.format(checkpoint_path, zenodo_path))
 
         if device == 'cuda' and torch.cuda.is_available():
             self.device = 'cuda'
@@ -48,6 +41,10 @@ class AudioTagging(object):
         if model is None:
             self.model = Cnn14(sample_rate=32000, window_size=1024, 
                 hop_size=320, mel_bins=64, fmin=50, fmax=14000, 
+                classes_num=self.classes_num)
+        elif model == "Cnn14_16k":
+            self.model = Cnn14_16k(sample_rate=16000, window_size=512, 
+                hop_size=160, mel_bins=64, fmin=50, fmax=8000, 
                 classes_num=self.classes_num)
         else:
             self.model = model
